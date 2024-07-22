@@ -1,0 +1,170 @@
+Routes/web.php
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Frontend\FrontendPostController;
+use App\Http\Controllers\Backend\PostController;
+use App\Http\Controllers\Backend\CategoryController;
+use App\Http\Controllers\Backend\TagController;
+use App\Http\Controllers\Backend\CommentController;
+use App\Http\Controllers\Backend\DashboardController;
+use App\Http\Controllers\Backend\ProfileController;
+use App\Http\Controllers\Backend\UserController;
+use App\Http\Controllers\Backend\ImageUploadController;
+
+// Frontend Page Routes
+Route::get('/', [FrontendPostController::class, 'index'])->name('frontend.index');
+Route::get('/about', function () {
+    return view('frontend.about');
+});
+Route::get('/services', function () {
+    return view('frontend.services');
+});
+Route::get('/contact', function () {
+    return view('frontend.contact');
+});
+Route::get('/post/{slug}', [FrontendPostController::class, 'show'])->name('frontend.show');
+
+// Backend Page Routes
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    Route::delete('/post/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+
+    Route::resource('users', UserController::class);
+    Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.updateRole');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::delete('/users/{user}/remove-profile-picture', [UserController::class, 'removeProfilePicture'])
+    ->name('users.remove_profile_picture');
+    Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
+
+    Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('upload.image');
+    
+    Route::resource('posts', PostController::class);
+    Route::resource('categories', CategoryController::class);
+    Route::resource('tags', TagController::class);
+    Route::resource('posts.comments', CommentController::class);
+    
+});
+
+require __DIR__.'/auth.php';
+
+==============================================================================================================================================
+
+Role and permission page using spatie
+
+error notif use "npm install sweetalert --save"
+
+admin@gmail.com
+admin1234
+
+author1@mail.com
+author2@mail.com
+author3@mail.com
+author4@mail.com
+author5@mail.com
+author1234
+
+user1@mail.com
+user2@mail.com
+user3@mail.com
+user4@mail.com
+user5@mail.com
+user1234
+
+==============================================================================================================================================
+mengatur agar pengguna di arahkan ke halaman setelah log in
+app/Http/controllers/Auth/AuthenticatedSessionController.php
+
+
+
+==============================================================================================================================================
+Pembatasan view halaman berdasarkan role menggunakan autentikasi bawaan laraevl
+
+
+1. php artisan make:policy UserPolicy
+--------------------------------------------------------------------------------------------------------------
+// app/Policies/UserPolicy.php
+
+namespace App\Policies;
+
+use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class UserPolicy
+{
+    use HandlesAuthorization;
+
+    /**
+     * Determine whether the user can view any models.
+     *
+     * @param  \App\Models\User  $user
+     * @return mixed
+     */
+    public function viewAny(User $user)
+    {
+        return $user->role === 'admin'; // atau sesuai dengan bagaimana Anda mendefinisikan role
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+
+
+
+2. php artisan make:provider AuthServiceProvider
+
+--------------------------------------------------------------------------------------------------------------
+// app/Providers/AuthServiceProvider.php
+
+namespace App\Providers;
+
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use App\Policies\UserPolicy;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    /**
+     * The policy mappings for the application.
+     *
+     * @var array
+     */
+    protected $policies = [
+        User::class => UserPolicy::class,
+    ];
+
+    /**
+     * Register any authentication / authorization services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->registerPolicies();
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+
+3. Impelmentasi
+
+--------------------------------------------------------------------------------------------------------------
+@can('viewAny', App\Models\User::class)
+       <li>
+         <a href="{{ route('users.index') }}" class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+           <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+             <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M16 19h4a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-2m-2.236-4a3 3 0 1 0 0-4M3 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+           </svg>
+           <span class="ml-3">Users</span>
+         </a>
+       </li>
+@endcan
+
+--------------------------------------------------------------------------------------------------------------
+
