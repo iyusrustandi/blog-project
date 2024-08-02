@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build --output public"
+        "build": "vite build",
+        "postinstall": "composer install --no-dev --optimize-autoloader"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",
