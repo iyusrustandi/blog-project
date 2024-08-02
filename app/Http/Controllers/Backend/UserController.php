@@ -1,5 +1,7 @@
 <?php
 
+//app/Http/Controllers/Backend/UserController.php
+
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
@@ -20,6 +22,24 @@ class UserController extends Controller
         return view('backend.users.index', compact('users'));
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        $users = User::with('roles') // Sesuaikan dengan relasi yang ada, misal 'roles'
+            ->where('name', 'like', "%{$query}%")
+            ->orWhere('email', 'like', "%{$query}%")
+            ->orWhereHas('roles', function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%");
+            }) // Sesuaikan dengan kolom yang ada pada relasi roles
+            ->paginate(5);
+
+        // Menambahkan query pencarian ke pagination links
+        $users->appends(['query' => $query]);
+
+        return view('backend.users.index', compact('users'));
+    }
+    
     /**
      * Show the form for creating a new resource.
      */
@@ -157,4 +177,5 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
+
 }

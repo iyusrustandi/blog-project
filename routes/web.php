@@ -1,5 +1,7 @@
 <?php
 
+//routes/web.php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Frontend\FrontendPostController;
 use App\Http\Controllers\Backend\PostController;
